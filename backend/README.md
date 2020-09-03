@@ -141,8 +141,8 @@ POST `/questions` Add a new question to the repository of available questions.
 
 ```
 {
-  "created": 29, 
   "success": true
+  "created": 29, 
 }
 
 ```
@@ -154,7 +154,7 @@ POST `/questions/search` Fetches all questions where a substring matches the sea
 
 ```
 {
-  "current_category": null, 
+  "success": true, 
   "questions": [
     {
       "answer": "Lisbon", 
@@ -164,8 +164,9 @@ POST `/questions/search` Fetches all questions where a substring matches the sea
       "question": "What is the capital of Portugal?"
     }
   ], 
-  "success": true, 
-  "total_questions": 1
+  
+  "total_questions": 1,
+  "current_category": null
 }
 
 ```
