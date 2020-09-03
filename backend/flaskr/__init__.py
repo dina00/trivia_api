@@ -9,13 +9,14 @@ from models import setup_db, Question, Category
 QUESTIONS_PER_PAGE = 10
 
 
-def paginate_questions(request, selection):
-    page = request.args.get('page', 1, type=int)  # grab page from url
-    start = (page - 1) * QUESTIONS_PER_PAGE
-    end = start + QUESTIONS_PER_PAGE
+def paginate_questions(request):
+    page_no = request.args.get('page', 1, type=int)  # grab page no. from url
+    start = (page_no - 1) * QUESTIONS_PER_PAGE
+    limit = start + QUESTIONS_PER_PAGE
 
-    questions = [i.format() for i in selection]
-    available_questions = questions[start:end]
+    all_questions = Question.query.all()
+    questions = [i.format() for i in all_questions]
+    available_questions = questions[start:limit]
 
     return available_questions
 
@@ -67,17 +68,17 @@ def create_app(test_config=None):
   '''
     @app.route('/questions')
     def retrieve_questions():
-        selection = Question.query.order_by(Question.id).all()
-        current_questions = paginate_questions(request, selection)
+        
+        current_questions = paginate_questions(request)
 
-        categories = Category.query.order_by(Category.type).all()
+        categories = Category.query.all()
 
-        if len(current_questions) == 0:
+        if not current_questions:
             abort(404)
 
         return jsonify({
             'questions': current_questions,
-            'total_questions': len(selection),
+            'total_questions': len(current_questions),
             'categories': {category.id: category.type for category in categories},
             'current category': None,
             'success': True,
@@ -92,7 +93,7 @@ def create_app(test_config=None):
     @app.route("/questions/<question_id>", methods=['DELETE'])
     def delete_question(question_id):
         try:
-            question = Question.query.get(question_id)
+            question = Question.query.filter(Question.id==question_id).first()
             question.delete()
             return jsonify({
                 'success': True,
@@ -128,7 +129,7 @@ def create_app(test_config=None):
                 difficulty=get_difficulty,
                 category=get_category)
             question.insert()
-            print('insert successful')
+            # print('insert successful')
             return jsonify({
                 'success': True,
                 'created': question.id
@@ -149,6 +150,7 @@ def create_app(test_config=None):
     def search_questions():
         body = request.get_json()
         search_term = body.get('searchTerm', None)
+
         if search_term != '':
             search_results = Question.query.filter(
                 Question.question.ilike(
@@ -174,11 +176,19 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that
   category to be shown.
   '''
-    @app.rresponsee('/categories/<int:category_id>/questions', methods=['GET'])
+    @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def retrieve_questions_by_category(category_id):
         try:
             questions = Question.query.filter(
                 Question.category == str(category_id)).all()
+            
+            if not questions:
+                return jsonify({
+                'success': True,
+                'questions': 'no questions available at this time',
+                'total_questions': len(questions),
+                'current_category': category_id
+            })
 
             return jsonify({
                 'success': True,
