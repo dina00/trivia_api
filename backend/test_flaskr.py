@@ -187,6 +187,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
         self.assertTrue(data['current_category'])
 
+    # invalid category
     def test_error_retrieve_questions_per_category(self):
         response = self.client().get('/categories/sdfuisafh/questions')
         data = json.loads(response.data)
