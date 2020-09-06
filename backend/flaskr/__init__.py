@@ -46,6 +46,13 @@ def create_app(test_config=None):
   Create an endpoint to handle GET requests
   for all available categories.
   '''
+    # for get operations we select all items in DB and return them
+    # for delete we filter to get item to be deleted then perform operation
+    # for adding make sure that the insertion was successful
+    # for search we match the search term with a question then return all matches (case insensitive)
+    # for quiz play we randomly return a question out of all questions and
+    # make sure it isn't included in previous questions
+
     @app.route('/categories')
     def get_categories():
         categories = Category.query.all()
@@ -68,17 +75,19 @@ def create_app(test_config=None):
   '''
     @app.route('/questions')
     def retrieve_questions():
-        
+
         current_questions = paginate_questions(request)
 
         categories = Category.query.all()
+
+        questions = Question.query.all()
 
         if not current_questions:
             abort(404)
 
         return jsonify({
             'questions': current_questions,
-            'total_questions': len(current_questions),
+            'total_questions': len(questions),
             'categories': {category.id: category.type for category in categories},
             'current category': None,
             'success': True,
@@ -93,13 +102,15 @@ def create_app(test_config=None):
     @app.route("/questions/<question_id>", methods=['DELETE'])
     def delete_question(question_id):
         try:
-            question = Question.query.filter(Question.id==question_id).first()
+            question = Question.query.filter(
+                Question.id == question_id).first()
             question.delete()
+
             return jsonify({
                 'success': True,
                 'deleted': question_id
             })
-        except:
+        except BaseException:
             abort(422)
     '''
   @TODO:
@@ -116,7 +127,7 @@ def create_app(test_config=None):
         body = request.get_json()
         if 'question' not in body or 'answer' not in body or 'difficulty' not in body or 'category' not in body:
             abort(422)
-        
+
         get_question = body.get('question')
         get_answer = body.get('answer')
         get_difficulty = body.get('difficulty')
@@ -130,11 +141,14 @@ def create_app(test_config=None):
                 category=get_category)
             question.insert()
             # print('insert successful')
+            questions = Question.query.all()
+
             return jsonify({
                 'success': True,
-                'created': question.id
+                'created': question.id,
+                'total_questions': len(questions)
             })
-        except:
+        except BaseException:
             abort(422)
     '''
   @TODO:
@@ -156,7 +170,9 @@ def create_app(test_config=None):
                 Question.question.ilike(
                     '%' + search_term + '%')).all()
 
-            if search_results is not None:
+            # print('---------------------',search_term,'--------',search_results)
+
+            if search_results is not None and len(search_results) != 0:
                 return jsonify({
                     'success': True,
                     # check format function in models.py
@@ -181,14 +197,14 @@ def create_app(test_config=None):
         try:
             questions = Question.query.filter(
                 Question.category == str(category_id)).all()
-            
+
             if not questions:
                 return jsonify({
-                'success': True,
-                'questions': 'no questions available at this time',
-                'total_questions': len(questions),
-                'current_category': category_id
-            })
+                    'success': True,
+                    'questions': 'no questions available at this time',
+                    'total_questions': len(questions),
+                    'current_category': category_id
+                })
 
             return jsonify({
                 'success': True,
@@ -196,7 +212,7 @@ def create_app(test_config=None):
                 'total_questions': len(questions),
                 'current_category': category_id
             })
-        except:
+        except BaseException:
             abort(404)  # not found
 
     '''
