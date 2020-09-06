@@ -8,6 +8,9 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+# pagination in flask
+# https://aviaryan.com/blog/gsoc/paginated-apis-flask
+
 
 def paginate_questions(request):
     page_no = request.args.get('page', 1, type=int)  # grab page no. from url
